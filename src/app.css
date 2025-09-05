@@ -1,0 +1,229 @@
+@import 'tailwindcss';
+
+/* SevenMark Monaco Editor Decorations - Simple Color Styling */
+.sevenmark-header {
+	color: #3b82f6 !important;
+	font-weight: bold;
+}
+
+.sevenmark-header-1 {
+	color: #ef4444 !important;
+	font-size: 1.5em;
+	font-weight: bold;
+}
+
+.sevenmark-header-2 {
+	color: #f97316 !important;
+	font-size: 1.3em;
+	font-weight: bold;
+}
+
+.sevenmark-header-3 {
+	color: #eab308 !important;
+	font-size: 1.1em;
+	font-weight: bold;
+}
+
+.sevenmark-bold {
+	font-weight: bold;
+}
+
+.sevenmark-italic {
+	font-style: italic;
+}
+
+.sevenmark-strikethrough {
+	text-decoration: line-through;
+}
+
+.sevenmark-underline {
+	text-decoration: underline;
+}
+
+.sevenmark-superscript {
+	color: #ec4899 !important;
+	vertical-align: super;
+	font-size: 0.8em;
+}
+
+.sevenmark-subscript {
+	color: #ec4899 !important;
+	vertical-align: sub;
+	font-size: 0.8em;
+}
+
+.sevenmark-code {
+	color: #10b981 !important;
+	font-family: 'Courier New', monospace;
+	background-color: rgba(75, 85, 99, 0.2);
+	padding: 2px 4px;
+	border-radius: 3px;
+}
+
+.sevenmark-comment {
+	color: #9ca3af !important;
+	font-style: italic;
+}
+
+.sevenmark-styled {
+	color: #fbbf24 !important;
+}
+
+.sevenmark-quote {
+	color: #9ca3af !important;
+	font-style: italic;
+}
+
+.sevenmark-list {
+	color: #86efac !important;
+}
+
+.sevenmark-media {
+	color: #fca5a5 !important;
+	text-decoration: underline;
+}
+
+.sevenmark-literal {
+	color: #9ca3af !important;
+}
+
+.sevenmark-escape {
+	color: #f59e0b !important;
+	font-weight: bold;
+}
+
+.sevenmark-error {
+	color: #dc2626 !important;
+	text-decoration: wavy underline;
+}
+
+.sevenmark-table {
+	color: #c4b5fd !important;
+}
+
+.sevenmark-fold {
+	color: #f9a8d4 !important;
+}
+
+.sevenmark-tex {
+	color: #a7f3d0 !important;
+	font-family: 'Times New Roman', serif;
+}
+
+/* Wiki elements */
+.sevenmark-include {
+	color: #db2777 !important;
+}
+
+.sevenmark-include-param {
+	color: #f97316 !important;
+	font-weight: bold;
+}
+
+.sevenmark-category {
+	color: #059669 !important;
+}
+
+.sevenmark-redirect {
+	color: #dc2626 !important;
+}
+
+.sevenmark-parameter {
+	color: #f59e0b !important;
+	font-weight: bold;
+}
+
+/* Missing SevenMark elements from Rust AST */
+.sevenmark-text {
+	color: inherit;
+}
+
+.sevenmark-ruby {
+	color: #f472b6 !important;
+	position: relative;
+}
+
+.sevenmark-footnote {
+	color: #8b5cf6 !important;
+	font-size: 0.8em;
+	vertical-align: super;
+}
+
+.sevenmark-footnoteelement {
+	color: #8b5cf6 !important;
+}
+
+.sevenmark-texelement {
+	color: #a7f3d0 !important;
+	font-family: 'Times New Roman', serif;
+}
+
+.sevenmark-mediaelement {
+	color: #fca5a5 !important;
+	text-decoration: underline;
+}
+
+.sevenmark-listelement {
+	color: #86efac !important;
+}
+
+.sevenmark-tableelement {
+	color: #c4b5fd !important;
+}
+
+.sevenmark-foldelement {
+	color: #f9a8d4 !important;
+}
+
+.sevenmark-blockquoteelement {
+	color: #9ca3af !important;
+	font-style: italic;
+}
+
+.sevenmark-styledelement {
+	color: #fbbf24 !important;
+}
+
+.sevenmark-includeelement {
+	color: #db2777 !important;
+}
+
+.sevenmark-categoryelement {
+	color: #059669 !important;
+}
+
+.sevenmark-redirectelement {
+	color: #dc2626 !important;
+}
+
+/* Macro elements */
+.sevenmark-null {
+	color: #6b7280 !important;
+}
+
+.sevenmark-footnote {
+	color: #8b5cf6 !important;
+	font-size: 0.8em;
+}
+
+.sevenmark-timenow {
+	color: #06b6d4 !important;
+	font-weight: bold;
+}
+
+.sevenmark-newline {
+	color: #e5e7eb !important;
+}
+
+.sevenmark-age {
+	color: #10b981 !important;
+}
+
+.sevenmark-variable {
+	color: #f59e0b !important;
+	font-style: italic;
+}
+
+.sevenmark-hline {
+	border-bottom: 2px solid #374151;
+}

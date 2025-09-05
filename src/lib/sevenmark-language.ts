@@ -31,11 +31,6 @@ export class SevenMarkDecorationProvider {
 		this.workerClient = new SevenMarkWorkerClient();
 	}
 
-	// 기존 동기 함수는 deprecated
-	setParseFunction(parseFunction: (input: string) => string) {
-		console.warn('setParseFunction is deprecated, using Web Worker instead');
-	}
-
 	// 완전 비동기 - 메인 스레드를 절대 블록하지 않음
 	updateDecorationsAsync(
 		model: monacoType.editor.ITextModel,
@@ -43,47 +38,56 @@ export class SevenMarkDecorationProvider {
 		callback: (decorations: any[]) => void
 	): void {
 		const text = model.getValue();
-		console.log(`🔧 Starting async parse for ${text.length} chars - no blocking`);
-		
+
+		// 텍스트가 변경되지 않았으면 캐시된 결과 반환
+		if (text === this.lastTextContent && this.cachedDecorations.length > 0) {
+			const monacoDecorations = this.cachedDecorations.map((dec) => ({
+				range: dec.range,
+				options: {
+					inlineClassName: dec.className,
+					hoverMessage: dec.hoverMessage ? { value: dec.hoverMessage } : undefined
+				}
+			}));
+			callback(monacoDecorations);
+			return;
+		}
+
 		// 워커에 요청만 보내고 즉시 반환
-		this.workerClient.parse(text).then(parsed => {
-			console.log(`⚡ Worker completed, processing in background`);
-			
-			try {
-				const elements = JSON.parse(parsed);
-				const decorations: DecorationInfo[] = [];
-				this.processAny(elements, monaco, decorations);
-				
-				// Monaco 형식으로 변환
-				const monacoDecorations = decorations.map((dec) => ({
-					range: dec.range,
-					options: {
-						inlineClassName: dec.className,
-						hoverMessage: dec.hoverMessage ? { value: dec.hoverMessage } : undefined
-					}
-				}));
-				
-				console.log(`📊 Background processing completed: ${decorations.length} decorations`);
-				
-				// UI 업데이트 콜백 실행
-				callback(monacoDecorations);
-			} catch (error) {
-				console.error('❌ Background decoration processing error:', error);
+		this.workerClient
+			.parse(text)
+			.then((parsed) => {
+				try {
+					const elements = JSON.parse(parsed);
+					const decorations: DecorationInfo[] = [];
+					this.processAny(elements, monaco, decorations);
+
+					// 캐시 업데이트
+					this.lastTextContent = text;
+					this.cachedDecorations = decorations;
+
+					// Monaco 형식으로 변환
+					const monacoDecorations = decorations.map((dec) => ({
+						range: dec.range,
+						options: {
+							inlineClassName: dec.className,
+							hoverMessage: dec.hoverMessage ? { value: dec.hoverMessage } : undefined
+						}
+					}));
+
+					// UI 업데이트 콜백 실행
+					callback(monacoDecorations);
+				} catch (error) {
+					callback([]);
+				}
+			})
+			.catch(() => {
 				callback([]);
-			}
-		}).catch(error => {
-			console.error('❌ Worker parse error:', error);
-			callback([]);
-		});
-		
-		// 메인 스레드는 즉시 반환
-		console.log('🚀 Parse request sent to worker, main thread continuing');
+			});
 	}
 
 	destroy() {
 		this.workerClient.destroy();
 	}
-
 
 	private locationToRange(
 		location: Location,
@@ -139,6 +143,42 @@ export class SevenMarkDecorationProvider {
 				return 'sevenmark-styled';
 			case 'Include':
 				return 'sevenmark-include';
+			// New elements from Rust AST
+			case 'Text':
+				return 'sevenmark-text';
+			case 'Escape':
+				return 'sevenmark-escape';
+			case 'RubyElement':
+				return 'sevenmark-ruby';
+			case 'FootnoteElement':
+				return 'sevenmark-footnoteelement';
+			case 'TeXElement':
+				return 'sevenmark-texelement';
+			case 'MediaElement':
+				return 'sevenmark-mediaelement';
+			case 'ListElement':
+				return 'sevenmark-listelement';
+			case 'IncludeElement':
+				return 'sevenmark-includeelement';
+			case 'CategoryElement':
+				return 'sevenmark-categoryelement';
+			case 'RedirectElement':
+				return 'sevenmark-redirectelement';
+			// Macro elements
+			case 'Null':
+				return 'sevenmark-null';
+			case 'FootNote':
+				return 'sevenmark-footnote';
+			case 'TimeNow':
+				return 'sevenmark-timenow';
+			case 'NewLine':
+				return 'sevenmark-newline';
+			case 'Age':
+				return 'sevenmark-age';
+			case 'Variable':
+				return 'sevenmark-variable';
+			case 'HLine':
+				return 'sevenmark-hline';
 			default:
 				return `sevenmark-${elementType.toLowerCase()}`;
 		}
@@ -151,7 +191,10 @@ export class SevenMarkDecorationProvider {
 			'ListElement',
 			'BlockQuoteElement',
 			'StyledElement',
-			'Include'
+			'Include',
+			'IncludeElement',
+			'CategoryElement',
+			'RedirectElement'
 		].includes(elementType);
 	}
 
@@ -167,8 +210,12 @@ export class SevenMarkDecorationProvider {
 				return { start: '{{{#quote', end: '}}}' };
 			case 'StyledElement':
 				return { start: '{{{#style', end: '}}}' };
-			case 'Include':
+			case 'IncludeElement':
 				return { start: '{{{#include', end: '}}}' };
+			case 'CategoryElement':
+				return { start: '[[Category:', end: ']]' };
+			case 'RedirectElement':
+				return { start: '#REDIRECT', end: '' };
 			default:
 				return { start: '{{{', end: '}}}' };
 		}
@@ -231,7 +278,11 @@ export class SevenMarkDecorationProvider {
 				const elementData = value[elementType];
 
 				// location이 있고 하이라이팅이 필요한 요소인 경우
-				if (elementData && elementData.location && !['Text', 'NewLine', 'HLine'].includes(elementType)) {
+				if (
+					elementData &&
+					elementData.location &&
+					!['Text', 'NewLine', 'HLine'].includes(elementType)
+				) {
 					const className = this.getClassName(elementType, elementData);
 
 					if (this.shouldUseMarkerHighlight(elementType)) {
@@ -287,15 +338,9 @@ export class SevenMarkDecorationProvider {
 			}
 		}
 	}
-
-
 }
 
 export const sevenMarkLanguageConfiguration: languages.LanguageConfiguration = {
-	comments: {
-		lineComment: '//',
-		blockComment: ['/*', '*/']
-	},
 	brackets: [
 		['{{{', '}}}'],
 		['[[', ']]'],
