@@ -208,8 +208,6 @@ export class SevenMarkDecorationProvider {
 				return { start: '{{{#list', end: '}}}' };
 			case 'BlockQuoteElement':
 				return { start: '{{{#quote', end: '}}}' };
-			case 'StyledElement':
-				return { start: '{{{#style', end: '}}}' };
 			case 'IncludeElement':
 				return { start: '{{{#include', end: '}}}' };
 			case 'CategoryElement':

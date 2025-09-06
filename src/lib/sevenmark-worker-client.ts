@@ -64,7 +64,7 @@ export class SevenMarkWorkerClient {
 			this.worker.postMessage({
 				type: 'init',
 				data: {
-					wasmUrl: '../sevenmark-wasm-web-v2.0.14/sevenmark.js'
+					wasmUrl: '../sevenmark-wasm-web-v2.0.16/sevenmark.js'
 				}
 			});
 		} catch (error) {
