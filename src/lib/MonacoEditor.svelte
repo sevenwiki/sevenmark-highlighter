@@ -54,7 +54,7 @@
 				language: 'sevenmark',
 				theme: 'vs-dark',
 				automaticLayout: true,
-				minimap: { enabled: true },
+				minimap: { enabled: false },
 				wordWrap: 'on',
 				lineNumbers: 'on',
 				folding: true,
@@ -79,7 +79,7 @@
 			// 값 변경 이벤트 리스너 (즉시 실행, 워커에서 이전 요청 취소)
 			editor.onDidChangeModelContent(() => {
 				value = editor.getValue();
-				
+
 				// 즉시 decoration 업데이트 (워커가 이전 요청을 자동 취소)
 				updateDecorations();
 			});
