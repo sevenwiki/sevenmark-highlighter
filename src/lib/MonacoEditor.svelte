@@ -54,7 +54,7 @@
 				language: 'sevenmark',
 				theme: 'vs-dark',
 				automaticLayout: true,
-				minimap: { enabled: false },
+				minimap: { enabled: true },
 				wordWrap: 'on',
 				lineNumbers: 'on',
 				folding: true,

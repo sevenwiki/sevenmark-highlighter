@@ -4,7 +4,10 @@ export class SevenMarkWorkerClient {
 	private worker: Worker | null = null;
 	private initialized: boolean = false;
 	private requestId: number = 0;
-	private pendingRequests: Map<number, { resolve: (result: string) => void; reject: (error: Error) => void }> = new Map();
+	private pendingRequests: Map<
+		number,
+		{ resolve: (result: string) => void; reject: (error: Error) => void }
+	> = new Map();
 	private currentRequestId: number | null = null;
 
 	constructor() {
@@ -61,10 +64,9 @@ export class SevenMarkWorkerClient {
 			this.worker.postMessage({
 				type: 'init',
 				data: {
-					wasmUrl: '../sevenmark-wasm-web-v2.0.12/sevenmark.js'
+					wasmUrl: '../sevenmark-wasm-web-v2.0.14/sevenmark.js'
 				}
 			});
-
 		} catch (error) {
 			console.error('Failed to create worker:', error);
 		}
@@ -74,7 +76,7 @@ export class SevenMarkWorkerClient {
 		if (!this.worker) {
 			throw new Error('Worker not created');
 		}
-		
+
 		if (!this.initialized) {
 			// Worker 초기화를 기다림 (최대 3초)
 			await new Promise((resolve, reject) => {
@@ -84,7 +86,7 @@ export class SevenMarkWorkerClient {
 						resolve(null);
 					}
 				}, 100);
-				
+
 				setTimeout(() => {
 					clearInterval(checkInterval);
 					reject(new Error('Worker initialization timeout'));

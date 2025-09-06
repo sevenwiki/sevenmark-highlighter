@@ -28,9 +28,9 @@
 	onMount(async () => {
 		try {
 			// web 타겟 WASM 로드 (init 함수 사용)
-			const init = (await import('../sevenmark-wasm-web-v2.0.12/sevenmark.js')).default;
+			const init = (await import('../sevenmark-wasm-web-v2.0.14/sevenmark.js')).default;
 			const { parse_sevenmark_to_monaco } = await import(
-				'../sevenmark-wasm-web-v2.0.12/sevenmark.js'
+				'../sevenmark-wasm-web-v2.0.14/sevenmark.js'
 			);
 
 			// WASM 초기화
