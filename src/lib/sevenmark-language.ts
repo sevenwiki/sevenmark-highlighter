@@ -179,6 +179,33 @@ export class SevenMarkDecorationProvider {
 				return 'sevenmark-variable';
 			case 'HLine':
 				return 'sevenmark-hline';
+			// 조건문 요소
+			case 'IfElement':
+				return 'sevenmark-ifelement';
+			case 'DefineElement':
+				return 'sevenmark-defineelement';
+			// 조건부 요소 (테이블/리스트 내부)
+			case 'Conditional':
+				return 'sevenmark-conditional';
+			// Expression 요소들
+			case 'Or':
+				return 'sevenmark-expr-or';
+			case 'And':
+				return 'sevenmark-expr-and';
+			case 'Not':
+				return 'sevenmark-expr-not';
+			case 'Comparison':
+				return 'sevenmark-expr-comparison';
+			case 'FunctionCall':
+				return 'sevenmark-expr-function';
+			case 'StringLiteral':
+				return 'sevenmark-expr-string';
+			case 'NumberLiteral':
+				return 'sevenmark-expr-number';
+			case 'BoolLiteral':
+				return 'sevenmark-expr-bool';
+			case 'Group':
+				return 'sevenmark-expr-group';
 			default:
 				return `sevenmark-${elementType.toLowerCase()}`;
 		}
@@ -194,7 +221,9 @@ export class SevenMarkDecorationProvider {
 			'Include',
 			'IncludeElement',
 			'CategoryElement',
-			'RedirectElement'
+			'RedirectElement',
+			'IfElement',
+			'DefineElement'
 		].includes(elementType);
 	}
 
@@ -214,6 +243,10 @@ export class SevenMarkDecorationProvider {
 				return { start: '[[Category:', end: ']]' };
 			case 'RedirectElement':
 				return { start: '#REDIRECT', end: '' };
+			case 'IfElement':
+				return { start: '{{{#if', end: '}}}' };
+			case 'DefineElement':
+				return { start: '{{{#define', end: '}}}' };
 			default:
 				return { start: '{{{', end: '}}}' };
 		}
@@ -257,6 +290,142 @@ export class SevenMarkDecorationProvider {
 		});
 	}
 
+	private processExpression(
+		expr: any,
+		monaco: typeof import('monaco-editor'),
+		decorations: DecorationInfo[]
+	) {
+		if (!expr || typeof expr !== 'object') return;
+
+		const exprType = this.getElementType(expr);
+		if (!exprType) return;
+
+		const exprData = expr[exprType];
+
+		// 재귀 처리 및 연산자/리프 노드만 하이라이팅
+		switch (exprType) {
+			case 'Or':
+			case 'And':
+				// 논리 연산자(||, &&)만 하이라이팅
+				if (exprData?.operator?.location) {
+					decorations.push({
+						range: this.locationToRange(exprData.operator.location, monaco),
+						className: 'sevenmark-expr-logical',
+						hoverMessage: `Logical: ${exprData.operator.kind}`
+					});
+				}
+				// left, right 재귀
+				if (exprData?.left) this.processExpression(exprData.left, monaco, decorations);
+				if (exprData?.right) this.processExpression(exprData.right, monaco, decorations);
+				break;
+			case 'Not':
+				// NOT 연산자(!)만 하이라이팅
+				if (exprData?.operator?.location) {
+					decorations.push({
+						range: this.locationToRange(exprData.operator.location, monaco),
+						className: 'sevenmark-expr-not',
+						hoverMessage: `Logical: ${exprData.operator.kind}`
+					});
+				}
+				// inner 재귀
+				if (exprData?.inner) this.processExpression(exprData.inner, monaco, decorations);
+				break;
+			case 'Comparison':
+				// 비교 연산자(==, !=, >, <, >=, <=)만 하이라이팅
+				if (exprData?.operator?.location) {
+					decorations.push({
+						range: this.locationToRange(exprData.operator.location, monaco),
+						className: 'sevenmark-expr-operator',
+						hoverMessage: `Operator: ${exprData.operator.kind}`
+					});
+				}
+				// left, right 재귀
+				if (exprData?.left) this.processExpression(exprData.left, monaco, decorations);
+				if (exprData?.right) this.processExpression(exprData.right, monaco, decorations);
+				break;
+			case 'Group':
+				// 괄호 하이라이팅 (시작과 끝)
+				if (exprData?.location) {
+					const loc = exprData.location;
+					// 여는 괄호 (
+					decorations.push({
+						range: new monaco.Range(loc.start_line, loc.start_column, loc.start_line, loc.start_column + 1),
+						className: 'sevenmark-expr-group',
+						hoverMessage: 'Group ('
+					});
+					// 닫는 괄호 )
+					decorations.push({
+						range: new monaco.Range(loc.end_line, loc.end_column - 1, loc.end_line, loc.end_column),
+						className: 'sevenmark-expr-group',
+						hoverMessage: 'Group )'
+					});
+				}
+				// inner 재귀
+				if (exprData?.inner) this.processExpression(exprData.inner, monaco, decorations);
+				break;
+			case 'FunctionCall':
+				// 함수 전체 하이라이팅
+				if (exprData?.location) {
+					decorations.push({
+						range: this.locationToRange(exprData.location, monaco),
+						className: 'sevenmark-expr-function',
+						hoverMessage: `Function: ${exprData.name}`
+					});
+				}
+				// arguments 배열 재귀
+				if (exprData?.arguments && Array.isArray(exprData.arguments)) {
+					for (const arg of exprData.arguments) {
+						this.processExpression(arg, monaco, decorations);
+					}
+				}
+				break;
+			case 'Element':
+				// SevenMarkElement 재귀 (processAny로 처리)
+				this.processAny(exprData, monaco, decorations);
+				break;
+			case 'StringLiteral':
+				// 문자열 리터럴 하이라이팅
+				if (exprData?.location) {
+					decorations.push({
+						range: this.locationToRange(exprData.location, monaco),
+						className: 'sevenmark-expr-string',
+						hoverMessage: `String: "${exprData.value}"`
+					});
+				}
+				break;
+			case 'NumberLiteral':
+				// 숫자 리터럴 하이라이팅
+				if (exprData?.location) {
+					decorations.push({
+						range: this.locationToRange(exprData.location, monaco),
+						className: 'sevenmark-expr-number',
+						hoverMessage: `Number: ${exprData.value}`
+					});
+				}
+				break;
+			case 'BoolLiteral':
+				// 불린 리터럴 하이라이팅
+				if (exprData?.location) {
+					decorations.push({
+						range: this.locationToRange(exprData.location, monaco),
+						className: 'sevenmark-expr-bool',
+						hoverMessage: `Boolean: ${exprData.value}`
+					});
+				}
+				break;
+			case 'Null':
+				// null 하이라이팅
+				if (exprData?.location) {
+					decorations.push({
+						range: this.locationToRange(exprData.location, monaco),
+						className: 'sevenmark-expr-null',
+						hoverMessage: 'Null'
+					});
+				}
+				break;
+		}
+	}
+
 	private processAny(
 		value: any,
 		monaco: typeof import('monaco-editor'),
@@ -275,11 +444,18 @@ export class SevenMarkDecorationProvider {
 				// SevenMark 요소인 경우
 				const elementData = value[elementType];
 
+				// Expression 타입들은 processExpression에서 처리하므로 건너뜀
+				const expressionTypes = [
+					'Or', 'And', 'Not', 'Comparison', 'Group', 'FunctionCall',
+					'StringLiteral', 'NumberLiteral', 'BoolLiteral', 'Null'
+				];
+
 				// location이 있고 하이라이팅이 필요한 요소인 경우
 				if (
 					elementData &&
 					elementData.location &&
-					!['Text', 'NewLine', 'HLine'].includes(elementType)
+					!['Text', 'NewLine', 'HLine'].includes(elementType) &&
+					!expressionTypes.includes(elementType)
 				) {
 					const className = this.getClassName(elementType, elementData);
 
@@ -303,6 +479,21 @@ export class SevenMarkDecorationProvider {
 							hoverMessage: elementType
 						});
 					}
+				}
+
+				// IfElement와 Conditional의 condition Expression 처리
+				if (
+					(elementType === 'IfElement' || elementType === 'Conditional') &&
+					elementData?.condition
+				) {
+					this.processExpression(elementData.condition, monaco, decorations);
+				}
+
+				// Conditional 요소의 내부 셀/행/아이템 처리
+				if (elementType === 'Conditional' && elementData) {
+					if (elementData.cells) this.processAny(elementData.cells, monaco, decorations);
+					if (elementData.rows) this.processAny(elementData.rows, monaco, decorations);
+					if (elementData.items) this.processAny(elementData.items, monaco, decorations);
 				}
 
 				// elementData의 모든 속성을 재귀 처리

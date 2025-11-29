@@ -227,3 +227,64 @@
 .sevenmark-hline {
 	border-bottom: 2px solid #374151;
 }
+
+/* Conditional Elements (v2.6.5+) */
+.sevenmark-ifelement {
+	color: #a78bfa !important; /* violet-400 */
+}
+
+.sevenmark-defineelement {
+	color: #818cf8 !important; /* indigo-400 */
+}
+
+.sevenmark-conditional {
+	color: #c084fc !important; /* purple-400 */
+	background-color: rgba(192, 132, 252, 0.1);
+}
+
+/* Expression Elements */
+.sevenmark-expr-logical {
+	color: #f472b6 !important; /* pink-400 - &&, || */
+	font-weight: bold;
+}
+
+.sevenmark-expr-not {
+	color: #fb7185 !important; /* rose-400 */
+	font-weight: bold;
+}
+
+.sevenmark-expr-comparison {
+	color: #38bdf8 !important; /* sky-400 */
+}
+
+.sevenmark-expr-operator {
+	color: #fbbf24 !important; /* amber-400 */
+	font-weight: bold;
+}
+
+.sevenmark-expr-function {
+	color: #34d399 !important; /* emerald-400 */
+	font-style: italic;
+}
+
+.sevenmark-expr-string {
+	color: #fde047 !important; /* yellow-300 */
+}
+
+.sevenmark-expr-number {
+	color: #60a5fa !important; /* blue-400 */
+}
+
+.sevenmark-expr-bool {
+	color: #f97316 !important; /* orange-500 */
+	font-weight: bold;
+}
+
+.sevenmark-expr-null {
+	color: #6b7280 !important; /* gray-500 */
+	font-style: italic;
+}
+
+.sevenmark-expr-group {
+	color: #94a3b8 !important; /* slate-400 */
+}

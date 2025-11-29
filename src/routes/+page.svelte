@@ -28,9 +28,9 @@
 	onMount(async () => {
 		try {
 			// web 타겟 WASM 로드 (init 함수 사용)
-			const init = (await import('../sevenmark-wasm-web-v2.0.16/sevenmark.js')).default;
+			const init = (await import('../sevenmark-wasm-web-v2.6.8/sevenmark_transform.js')).default;
 			const { parse_sevenmark_to_monaco } = await import(
-				'../sevenmark-wasm-web-v2.0.16/sevenmark.js'
+				'../sevenmark-wasm-web-v2.6.8/sevenmark_transform.js'
 			);
 
 			// WASM 초기화
@@ -85,7 +85,7 @@
 
 	<div class="flex h-[calc(100vh-120px)]">
 		<!-- 에디터 영역 -->
-		<div class="w-full p-4">
+		<div class="w-1/2 p-4">
 			<div class="h-full overflow-hidden rounded-lg border bg-white shadow-sm">
 				<div class="border-b bg-gray-50 px-4 py-3">
 					<h2 class="text-lg font-semibold text-gray-900">SevenMark Editor</h2>
@@ -97,6 +97,26 @@
 						theme="vs-dark"
 						height="100%"
 					/>
+				</div>
+			</div>
+		</div>
+
+		<!-- WASM 파싱 결과 영역 -->
+		<div class="w-1/2 p-2">
+			<div class="h-full overflow-hidden rounded-lg border bg-white shadow-sm">
+				<div class="flex items-center justify-between border-b bg-gray-50 px-4 py-3">
+					<h2 class="text-lg font-semibold text-gray-900">WASM Parsing Result</h2>
+					<button
+						onclick={testParse}
+						class="rounded bg-blue-500 px-3 py-1 text-sm font-medium text-white hover:bg-blue-600 disabled:opacity-50"
+						disabled={!wasmLoaded}
+					>
+						Parse
+					</button>
+				</div>
+				<div class="h-[calc(100%-57px)] overflow-auto p-4">
+					<pre class="font-mono text-sm whitespace-pre-wrap text-gray-800">{parsedResult ||
+							'No result yet. Click Parse button.'}</pre>
 				</div>
 			</div>
 		</div>
