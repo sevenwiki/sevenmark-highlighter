@@ -22,6 +22,12 @@ export interface FoldingRangeInfo {
 
 import { SevenMarkWorkerClient } from './sevenmark-worker-client.js';
 
+// Expression 타입 목록 (processAny에서 건너뛰기 위한 상수)
+const EXPRESSION_TYPES = new Set([
+	'Or', 'And', 'Not', 'Comparison', 'Group', 'FunctionCall',
+	'StringLiteral', 'NumberLiteral', 'BoolLiteral', 'Null'
+]);
+
 export class SevenMarkDecorationProvider {
 	private workerClient: SevenMarkWorkerClient;
 	private lastTextContent: string = '';
@@ -444,18 +450,13 @@ export class SevenMarkDecorationProvider {
 				// SevenMark 요소인 경우
 				const elementData = value[elementType];
 
-				// Expression 타입들은 processExpression에서 처리하므로 건너뜀
-				const expressionTypes = [
-					'Or', 'And', 'Not', 'Comparison', 'Group', 'FunctionCall',
-					'StringLiteral', 'NumberLiteral', 'BoolLiteral', 'Null'
-				];
-
 				// location이 있고 하이라이팅이 필요한 요소인 경우
+				// Expression 타입들은 processExpression에서 처리하므로 건너뜀
 				if (
 					elementData &&
 					elementData.location &&
 					!['Text', 'NewLine', 'HLine'].includes(elementType) &&
-					!expressionTypes.includes(elementType)
+					!EXPRESSION_TYPES.has(elementType)
 				) {
 					const className = this.getClassName(elementType, elementData);
 
@@ -482,18 +483,12 @@ export class SevenMarkDecorationProvider {
 				}
 
 				// IfElement와 Conditional의 condition Expression 처리
+				// (Expression 타입은 EXPRESSION_TYPES에서 건너뛰므로 명시적 처리 필요)
 				if (
 					(elementType === 'IfElement' || elementType === 'Conditional') &&
 					elementData?.condition
 				) {
 					this.processExpression(elementData.condition, monaco, decorations);
-				}
-
-				// Conditional 요소의 내부 셀/행/아이템 처리
-				if (elementType === 'Conditional' && elementData) {
-					if (elementData.cells) this.processAny(elementData.cells, monaco, decorations);
-					if (elementData.rows) this.processAny(elementData.rows, monaco, decorations);
-					if (elementData.items) this.processAny(elementData.items, monaco, decorations);
 				}
 
 				// elementData의 모든 속성을 재귀 처리

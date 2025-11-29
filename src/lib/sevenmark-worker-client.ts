@@ -2,19 +2,23 @@
 
 export class SevenMarkWorkerClient {
 	private worker: Worker | null = null;
-	private initialized: boolean = false;
 	private requestId: number = 0;
 	private pendingRequests: Map<
 		number,
 		{ resolve: (result: string) => void; reject: (error: Error) => void }
 	> = new Map();
 	private currentRequestId: number | null = null;
+	private initPromise: Promise<void>;
+	private initResolve: (() => void) | null = null;
 
 	constructor() {
+		this.initPromise = new Promise((resolve) => {
+			this.initResolve = resolve;
+		});
 		this.initWorker();
 	}
 
-	private async initWorker() {
+	private initWorker() {
 		try {
 			// Worker 생성
 			this.worker = new Worker(new URL('./sevenmark-worker.ts', import.meta.url), {
@@ -27,7 +31,10 @@ export class SevenMarkWorkerClient {
 
 				switch (type) {
 					case 'initialized':
-						this.initialized = true;
+						if (this.initResolve) {
+							this.initResolve();
+							this.initResolve = null;
+						}
 						break;
 
 					case 'parsed':
@@ -77,22 +84,8 @@ export class SevenMarkWorkerClient {
 			throw new Error('Worker not created');
 		}
 
-		if (!this.initialized) {
-			// Worker 초기화를 기다림 (최대 3초)
-			await new Promise((resolve, reject) => {
-				const checkInterval = setInterval(() => {
-					if (this.initialized) {
-						clearInterval(checkInterval);
-						resolve(null);
-					}
-				}, 100);
-
-				setTimeout(() => {
-					clearInterval(checkInterval);
-					reject(new Error('Worker initialization timeout'));
-				}, 3000);
-			});
-		}
+		// Worker 초기화 완료까지 대기
+		await this.initPromise;
 
 		// 이전 요청 취소
 		if (this.currentRequestId !== null && this.pendingRequests.has(this.currentRequestId)) {
@@ -122,6 +115,5 @@ export class SevenMarkWorkerClient {
 			this.worker = null;
 		}
 		this.pendingRequests.clear();
-		this.initialized = false;
 	}
 }
